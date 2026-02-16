@@ -33,7 +33,7 @@ interface PublishStorage {
 /**
  * 简易 Markdown → HTML 转换（用于微信公众号等平台）
  */
-function markdownToSimpleHtml(md: string, title?: string, includeToc?: boolean): string {
+function markdownToSimpleHtml(md: string, title?: string, _includeToc?: boolean): string {
   let html = md;
 
   // 标题

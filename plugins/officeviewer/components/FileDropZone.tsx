@@ -1,10 +1,10 @@
 import { useState, useCallback, type DragEvent } from 'react';
-import type { FileDropZoneProps, OfficeFile, SupportedFileType } from '../types';
+import type { FileDropZoneProps, SupportedFileType } from '../types';
 import { Upload, FileText, FileSpreadsheet, FileType, Presentation, Clock, Loader2 } from 'lucide-react';
 
 export function FileDropZone({
   children,
-  onFileDrop,
+  onFileDrop: _onFileDrop,
   loading,
   currentFile,
   recentFiles,
