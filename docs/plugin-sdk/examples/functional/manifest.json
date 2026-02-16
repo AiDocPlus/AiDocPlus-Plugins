@@ -1,0 +1,14 @@
+{
+  "id": "example-tool-uuid",
+  "name": "Tool Example",
+  "version": "1.0.0",
+  "description": "A minimal functional plugin example",
+  "icon": "Wrench",
+  "author": "AiDocPlus",
+  "type": "external",
+  "enabled": true,
+  "majorCategory": "functional",
+  "subCategory": "utility",
+  "category": "utility",
+  "tags": ["example", "tool", "utility"]
+}
