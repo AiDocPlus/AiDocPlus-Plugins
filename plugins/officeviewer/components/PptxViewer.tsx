@@ -229,7 +229,7 @@ export function PptxViewer({ filePath, fileName, onError }: PptxViewerProps) {
         {/* PPTX 渲染容器 */}
         <div
           ref={containerRef}
-          className="flex flex-col items-center gap-4 p-4 min-h-full"
+          className="p-4 min-h-full [&>.pptx-preview-wrapper]:mx-auto"
         />
       </div>
     </div>
