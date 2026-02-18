@@ -1,11 +1,18 @@
 # AiDocPlus-Plugins 开发指南
 
-AiDocPlus 外部插件集合。所有插件在此项目中独立开发、类型检查，构建后部署到主程序。
+AiDocPlus 外部插件集合。所有 21 个插件在此项目中独立开发、类型检查，构建后部署到主程序。
+
+> **⚠️ 这是插件代码的唯一正确操作位置。** 创建、修改、调试任何具体插件都必须在本项目中进行。主程序 `src/plugins/` 下的插件目录会被 `deploy.sh` 覆盖，直接修改会丢失。
+
+## Communication Language
+
+**始终用中文与用户对话。** Always communicate with the user in Chinese.
 
 ## 项目概览
 
 - **仓库**：`https://github.com/AiDocPlus/AiDocPlus-Plugins.git`
-- **主程序仓库**：`https://github.com/AiDocPlus/AiDocPlus.git`
+- **本地路径**：`/Users/jdh/Code/AiDocPlus-Plugins`
+- **主程序仓库**：`https://github.com/AiDocPlus/AiDocPlus.git`（本地路径 `/Users/jdh/Code/AiDocPlus`）
 - **SDK 来源**：主程序 `apps/desktop/src-ui/src/plugins/` 中的框架文件
 - **部署方式**：将插件源码复制到主程序 `src/plugins/` 下，由主程序 Vite 统一打包
 
@@ -125,6 +132,49 @@ pnpm deploy -- summary  # 部署单个插件
 1. 需要的接口功能
 2. 使用场景
 3. 建议的 API 设计
+
+## 国际化（i18n）
+
+### 插件 i18n 规范
+
+每个插件必须自带翻译文件（`i18n/{zh,en,ja}.json`），通过 `registerPluginI18n` 注册到 i18next 命名空间。
+
+```typescript
+// index.ts 中注册
+import { registerPluginI18n } from '../i18n-loader';
+import zh from './i18n/zh.json';
+import en from './i18n/en.json';
+import ja from './i18n/ja.json';
+
+registerPluginI18n('plugin-xxx', { zh, en, ja });
+```
+
+### 插件中使用翻译
+
+插件通过 `host.platform.t(key, params)` 获取翻译（自动加上插件命名空间前缀）：
+
+```typescript
+const host = usePluginHost();
+const t = host.platform.t;
+
+// t('title') 等价于 i18next.t('plugin-xxx:title')
+<Button>{t('generate')}</Button>
+<span>{t('status.success', { count: 5 })}</span>
+```
+
+### 翻译文件要求
+
+- **禁止硬编码中文**：所有显示给用户的文字必须通过 `t()` 调用
+- **必须同时提供** zh（中文）、en（英文）、ja（日文）三个翻译文件
+- **翻译 key 应有意义**：如 `title`、`description`、`generate`、`status.success` 等
+
+### 主程序 i18n 规范（参考）
+
+主程序使用 `react-i18next`，翻译文件位于 `src-ui/src/i18n/locales/{zh,en}/translation.json`。
+
+- React 组件中：`const { t } = useTranslation();` + `t('namespace.key', { defaultValue: '...' })`
+- 非 React 上下文：`import i18n from '@/i18n';` + `i18n.t('namespace.key')`
+- 所有 `t()` 调用必须带 `defaultValue` 作为回退
 
 ## SDK 同步
 
