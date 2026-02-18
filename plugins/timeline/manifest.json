@@ -10,5 +10,15 @@
   "majorCategory": "functional",
   "subCategory": "analysis",
   "category": "analysis",
-  "tags": ["timeline", "版本", "历史", "时间线"]
+  "tags": [
+    "timeline",
+    "版本",
+    "历史",
+    "时间线"
+  ],
+  "roles": [
+    "researcher",
+    "product-manager",
+    "civil-servant"
+  ]
 }

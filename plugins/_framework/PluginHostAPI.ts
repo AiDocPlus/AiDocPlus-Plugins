@@ -1,13 +1,32 @@
 import { createContext, useContext } from 'react';
 import type { Document } from '@aidocplus/shared-types';
+import { getActiveRoleInstance, getInstanceSystemPrompt } from '@aidocplus/shared-types';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { save, open } from '@tauri-apps/plugin-dialog';
-import { getAIInvokeParams, useSettingsStore } from '@/stores/useSettingsStore';
+import { getAIInvokeParamsForService, useSettingsStore } from '@/stores/useSettingsStore';
 import { usePluginStorageStore } from '@/stores/usePluginStorageStore';
 import { getFragmentsGroupedByPlugin } from '../fragments';
 import { parseThinkTags } from '@/utils/thinkTagParser';
 import i18next from 'i18next';
+
+/** 为插件 AI 调用注入角色 system prompt */
+function injectRolePrompt(messages: Array<{ role: string; content: string }>): Array<{ role: string; content: string }> {
+  const roleSettings = useSettingsStore.getState().role;
+  const instance = getActiveRoleInstance(roleSettings);
+  if (!instance) return messages;
+  const rolePrompt = getInstanceSystemPrompt(instance).trim();
+  if (!rolePrompt) return messages;
+  // 如果第一条已经是 system 消息，将角色 prompt 拼在前面
+  if (messages.length > 0 && messages[0].role === 'system') {
+    return [
+      { role: 'system', content: rolePrompt + '\n\n' + messages[0].content },
+      ...messages.slice(1),
+    ];
+  }
+  // 否则在最前面插入角色 system 消息
+  return [{ role: 'system', content: rolePrompt }, ...messages];
+}
 
 // ============================================================
 // SDK 版本号
@@ -373,13 +392,13 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
 
   const ai: AIAPI = {
     chat: async (messages, options) => {
-      const aiParams = getAIInvokeParams();
+      const aiParams = getAIInvokeParamsForService(opts.getDocument().aiServiceId);
       // 通知宿主：开始新的 AI 调用，清空思考内容
       lastThinking = '';
       opts.onThinkingUpdate?.('');
 
       const rawResult = await invoke<string>('chat', {
-        messages,
+        messages: injectRolePrompt(messages),
         ...aiParams,
         maxTokens: options?.maxTokens ?? 4096,
       });
@@ -393,7 +412,7 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
       return parsed.content;
     },
     chatStream: async (messages, onChunk, options) => {
-      const aiParams = getAIInvokeParams();
+      const aiParams = getAIInvokeParamsForService(opts.getDocument().aiServiceId);
       const requestId = `plugin_${pluginId}_${Date.now()}`;
 
       // 通知宿主：开始新的 AI 调用，清空思考内容
@@ -447,7 +466,7 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
 
         // 调用后端流式接口
         await invoke<string>('chat_stream', {
-          messages,
+          messages: injectRolePrompt(messages),
           ...aiParams,
           maxTokens: options?.maxTokens ?? 4096,
           requestId,
@@ -467,7 +486,7 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
       }
     },
     isAvailable: () => {
-      const aiParams = getAIInvokeParams();
+      const aiParams = getAIInvokeParamsForService(opts.getDocument().aiServiceId);
       return !!(aiParams.provider && aiParams.apiKey && aiParams.model);
     },
     truncateContent: (text: string) => {

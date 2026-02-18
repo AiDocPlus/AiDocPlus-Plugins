@@ -10,5 +10,14 @@
   "majorCategory": "content-generation",
   "subCategory": "ai-text",
   "category": "ai-text",
-  "tags": ["translation", "翻译", "多语言", "英语"]
+  "tags": [
+    "translation",
+    "翻译",
+    "多语言",
+    "英语"
+  ],
+  "roles": [
+    "researcher",
+    "lawyer"
+  ]
 }

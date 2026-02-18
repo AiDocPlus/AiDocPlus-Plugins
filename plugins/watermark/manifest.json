@@ -10,5 +10,13 @@
   "majorCategory": "functional",
   "subCategory": "export",
   "category": "export",
-  "tags": ["watermark", "水印", "保护"]
+  "tags": [
+    "watermark",
+    "水印",
+    "保护"
+  ],
+  "roles": [
+    "lawyer",
+    "civil-servant"
+  ]
 }

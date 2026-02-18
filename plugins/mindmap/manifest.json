@@ -10,5 +10,16 @@
   "majorCategory": "content-generation",
   "subCategory": "visualization",
   "category": "visualization",
-  "tags": ["mindmap", "导图", "结构", "脑图"]
+  "tags": [
+    "mindmap",
+    "导图",
+    "结构",
+    "脑图"
+  ],
+  "roles": [
+    "student",
+    "researcher",
+    "programmer",
+    "product-manager"
+  ]
 }

@@ -10,5 +10,15 @@
   "majorCategory": "functional",
   "subCategory": "analysis",
   "category": "analysis",
-  "tags": ["statistics", "统计", "写作", "进度", "目标"]
+  "tags": [
+    "statistics",
+    "统计",
+    "写作",
+    "进度",
+    "目标"
+  ],
+  "roles": [
+    "researcher",
+    "content-creator"
+  ]
 }

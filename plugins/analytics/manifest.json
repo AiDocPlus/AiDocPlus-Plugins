@@ -10,5 +10,15 @@
   "majorCategory": "content-generation",
   "subCategory": "analysis",
   "category": "analysis",
-  "tags": ["analytics", "统计", "字数", "词频", "阅读时间"]
+  "tags": [
+    "analytics",
+    "统计",
+    "字数",
+    "词频",
+    "阅读时间"
+  ],
+  "roles": [
+    "researcher",
+    "product-manager"
+  ]
 }

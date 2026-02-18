@@ -10,5 +10,16 @@
   "majorCategory": "functional",
   "subCategory": "export",
   "category": "export",
-  "tags": ["pandoc", "导出", "pdf", "docx", "epub", "latex"]
+  "tags": [
+    "pandoc",
+    "导出",
+    "pdf",
+    "docx",
+    "epub",
+    "latex"
+  ],
+  "roles": [
+    "researcher",
+    "programmer"
+  ]
 }

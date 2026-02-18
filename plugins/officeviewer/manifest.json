@@ -10,5 +10,15 @@
   "majorCategory": "functional",
   "subCategory": "visualization",
   "category": "visualization",
-  "tags": ["office", "预览", "pdf", "docx", "xlsx"]
+  "tags": [
+    "office",
+    "预览",
+    "pdf",
+    "docx",
+    "xlsx"
+  ],
+  "roles": [
+    "civil-servant",
+    "product-manager"
+  ]
 }

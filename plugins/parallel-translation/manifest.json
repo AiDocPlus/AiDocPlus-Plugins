@@ -10,5 +10,15 @@
   "majorCategory": "content-generation",
   "subCategory": "ai-text",
   "category": "ai-text",
-  "tags": ["translation", "翻译", "对照", "多语言", "双语"]
+  "tags": [
+    "translation",
+    "翻译",
+    "对照",
+    "多语言",
+    "双语"
+  ],
+  "roles": [
+    "researcher",
+    "student"
+  ]
 }

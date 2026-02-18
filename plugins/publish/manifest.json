@@ -10,5 +10,15 @@
   "majorCategory": "functional",
   "subCategory": "export",
   "category": "export",
-  "tags": ["publish", "发布", "公众号", "知乎", "掘金"]
+  "tags": [
+    "publish",
+    "发布",
+    "公众号",
+    "知乎",
+    "掘金"
+  ],
+  "roles": [
+    "content-creator",
+    "marketing"
+  ]
 }

@@ -10,5 +10,17 @@
   "majorCategory": "functional",
   "subCategory": "communication",
   "category": "communication",
-  "tags": ["email", "邮件", "发送", "smtp", "协作"]
+  "tags": [
+    "email",
+    "邮件",
+    "发送",
+    "smtp",
+    "协作"
+  ],
+  "roles": [
+    "lawyer",
+    "civil-servant",
+    "product-manager",
+    "marketing"
+  ]
 }

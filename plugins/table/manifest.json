@@ -10,5 +10,16 @@
   "majorCategory": "content-generation",
   "subCategory": "data",
   "category": "data",
-  "tags": ["table", "表格", "excel", "xlsx", "数据"]
+  "tags": [
+    "table",
+    "表格",
+    "excel",
+    "xlsx",
+    "数据"
+  ],
+  "roles": [
+    "researcher",
+    "product-manager",
+    "civil-servant"
+  ]
 }

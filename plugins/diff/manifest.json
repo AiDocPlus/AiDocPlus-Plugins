@@ -10,5 +10,16 @@
   "majorCategory": "functional",
   "subCategory": "analysis",
   "category": "analysis",
-  "tags": ["diff", "对比", "差异", "版本", "比较"]
+  "tags": [
+    "diff",
+    "对比",
+    "差异",
+    "版本",
+    "比较"
+  ],
+  "roles": [
+    "lawyer",
+    "programmer",
+    "researcher"
+  ]
 }

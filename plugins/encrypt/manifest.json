@@ -10,5 +10,14 @@
   "majorCategory": "functional",
   "subCategory": "export",
   "category": "export",
-  "tags": ["encrypt", "加密", "安全", "密码"]
+  "tags": [
+    "encrypt",
+    "加密",
+    "安全",
+    "密码"
+  ],
+  "roles": [
+    "lawyer",
+    "civil-servant"
+  ]
 }

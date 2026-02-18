@@ -10,5 +10,14 @@
   "majorCategory": "content-generation",
   "subCategory": "ai-text",
   "category": "ai-text",
-  "tags": ["quiz", "测试", "考试", "题目"]
+  "tags": [
+    "quiz",
+    "测试",
+    "考试",
+    "题目"
+  ],
+  "roles": [
+    "teacher",
+    "student"
+  ]
 }

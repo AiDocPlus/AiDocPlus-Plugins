@@ -1,12 +1,39 @@
 import { createContext, useContext } from 'react';
 import type { Document } from '@aidocplus/shared-types';
+import { getActiveRole } from '@aidocplus/shared-types';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { getAIInvokeParams, useSettingsStore } from '@/stores/useSettingsStore';
 import { usePluginStorageStore } from '@/stores/usePluginStorageStore';
 import { getFragmentsGroupedByPlugin } from '../fragments';
+import { parseThinkTags } from '@/utils/thinkTagParser';
 import i18next from 'i18next';
+
+/** 为插件 AI 调用注入角色 system prompt */
+function injectRolePrompt(messages: Array<{ role: string; content: string }>): Array<{ role: string; content: string }> {
+  const roleSettings = useSettingsStore.getState().role;
+  const activeRole = getActiveRole(roleSettings);
+  if (!activeRole) return messages;
+  const rolePrompt = (activeRole.systemPrompt || '').trim();
+  if (!rolePrompt) return messages;
+  // 如果第一条已经是 system 消息，将角色 prompt 拼在前面
+  if (messages.length > 0 && messages[0].role === 'system') {
+    return [
+      { role: 'system', content: rolePrompt + '\n\n' + messages[0].content },
+      ...messages.slice(1),
+    ];
+  }
+  // 否则在最前面插入角色 system 消息
+  return [{ role: 'system', content: rolePrompt }, ...messages];
+}
+
+// ============================================================
+// SDK 版本号
+// ============================================================
+
+/** SDK 版本号，用于插件兼容性检查 */
+export const SDK_VERSION = 1;
 
 // ============================================================
 // 命令权限白名单
@@ -67,14 +94,14 @@ export interface ContentAPI {
 
 /** AI 服务 API */
 export interface AIAPI {
-  /** 单次 AI 对话（非流式） */
+  /** 单次 AI 对话（非流式），自动过滤 <think> 标签 */
   chat(messages: Array<{ role: string; content: string }>, options?: { maxTokens?: number }): Promise<string>;
   /**
-   * 流式 AI 对话
+   * 流式 AI 对话，自动过滤 <think> 标签
    * @param messages 消息列表
-   * @param onChunk 每次收到内容块时的回调
+   * @param onChunk 每次收到正文内容块时的回调（不含 think 内容）
    * @param options 选项（支持 signal 用于取消）
-   * @returns 完整的累积内容
+   * @returns 完整的累积正文内容（不含 think 内容）
    */
   chatStream(
     messages: Array<{ role: string; content: string }>,
@@ -85,6 +112,8 @@ export interface AIAPI {
   isAvailable(): boolean;
   /** 按用户设置截断内容 */
   truncateContent(text: string): string;
+  /** 获取最近一次 AI 调用中的思考内容（<think> 标签内文本） */
+  getLastThinking(): string;
 }
 
 /** 插件独立存储 API（按 pluginId 命名空间隔离） */
@@ -235,6 +264,20 @@ export interface PluginHostAPI {
 export const PluginHostContext = createContext<PluginHostAPI | null>(null);
 
 /**
+ * 思考内容 Context
+ * 由 PluginHostProvider 提供，布局组件通过 useThinkingContent() 获取
+ */
+export const ThinkingContext = createContext<string>('');
+
+/**
+ * 获取当前 AI 思考内容
+ * 布局组件（PluginPanelLayout / ToolPluginLayout）内部使用
+ */
+export function useThinkingContent(): string {
+  return useContext(ThinkingContext);
+}
+
+/**
  * 插件内使用的 hook，获取主程序公共 API
  */
 export function usePluginHost(): PluginHostAPI {
@@ -319,6 +362,8 @@ export interface CreatePluginHostAPIOptions {
   i18nNamespace?: string;
   /** 事件总线实例（可选，用于插件间通信） */
   eventBus?: PluginEventBus;
+  /** AI 思考内容更新回调（SDK 自动调用，宿主通过此回调更新 ThinkingContext） */
+  onThinkingUpdate?: (thinking: string) => void;
 }
 
 export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHostAPI {
@@ -343,26 +388,46 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
   };
 
   // ── AI API ──
+  let lastThinking = '';
+
   const ai: AIAPI = {
     chat: async (messages, options) => {
       const aiParams = getAIInvokeParams();
-      return invoke<string>('chat', {
-        messages,
+      // 通知宿主：开始新的 AI 调用，清空思考内容
+      lastThinking = '';
+      opts.onThinkingUpdate?.('');
+
+      const rawResult = await invoke<string>('chat', {
+        messages: injectRolePrompt(messages),
         ...aiParams,
         maxTokens: options?.maxTokens ?? 4096,
       });
+
+      // 自动过滤 <think> 标签
+      const parsed = parseThinkTags(rawResult);
+      lastThinking = parsed.thinking;
+      if (parsed.thinking) {
+        opts.onThinkingUpdate?.(parsed.thinking);
+      }
+      return parsed.content;
     },
     chatStream: async (messages, onChunk, options) => {
       const aiParams = getAIInvokeParams();
       const requestId = `plugin_${pluginId}_${Date.now()}`;
+
+      // 通知宿主：开始新的 AI 调用，清空思考内容
+      lastThinking = '';
+      opts.onThinkingUpdate?.('');
 
       // 检查是否已取消
       if (options?.signal?.aborted) {
         throw new Error('Request aborted');
       }
 
-      // 累积流式内容
-      let accumulatedContent = '';
+      // 累积流式原始内容（含 think 标签）
+      let rawAccumulated = '';
+      // 上一次解析后的正文长度，用于计算增量
+      let prevContentLen = 0;
       let unlisten: (() => void) | null = null;
 
       try {
@@ -374,8 +439,24 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
           if (event.payload.request_id !== requestId) return;
 
           const chunk = event.payload.content;
-          accumulatedContent += chunk;
-          onChunk(chunk);
+          rawAccumulated += chunk;
+
+          // 实时解析 <think> 标签
+          const parsed = parseThinkTags(rawAccumulated);
+
+          // 更新思考内容
+          if (parsed.thinking !== lastThinking) {
+            lastThinking = parsed.thinking;
+            opts.onThinkingUpdate?.(parsed.thinking);
+          }
+
+          // 只将正文增量传给插件的 onChunk
+          const currentContentLen = parsed.content.length;
+          if (currentContentLen > prevContentLen) {
+            const contentDelta = parsed.content.slice(prevContentLen);
+            prevContentLen = currentContentLen;
+            onChunk(contentDelta);
+          }
         });
 
         // 如果在设置监听期间已取消
@@ -385,13 +466,19 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
 
         // 调用后端流式接口
         await invoke<string>('chat_stream', {
-          messages,
+          messages: injectRolePrompt(messages),
           ...aiParams,
           maxTokens: options?.maxTokens ?? 4096,
           requestId,
         });
 
-        return accumulatedContent;
+        // 最终解析
+        const finalParsed = parseThinkTags(rawAccumulated);
+        lastThinking = finalParsed.thinking;
+        if (finalParsed.thinking) {
+          opts.onThinkingUpdate?.(finalParsed.thinking);
+        }
+        return finalParsed.content;
       } finally {
         if (unlisten) {
           unlisten();
@@ -409,6 +496,7 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
       }
       return text;
     },
+    getLastThinking: () => lastThinking,
   };
 
   // ── Storage API ──

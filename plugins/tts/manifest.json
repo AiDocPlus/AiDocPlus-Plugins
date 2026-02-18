@@ -10,5 +10,14 @@
   "majorCategory": "functional",
   "subCategory": "export",
   "category": "export",
-  "tags": ["tts", "语音", "朗读", "播放"]
+  "tags": [
+    "tts",
+    "语音",
+    "朗读",
+    "播放"
+  ],
+  "roles": [
+    "teacher",
+    "content-creator"
+  ]
 }

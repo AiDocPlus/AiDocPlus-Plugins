@@ -10,5 +10,16 @@
   "majorCategory": "content-generation",
   "subCategory": "visualization",
   "category": "visualization",
-  "tags": ["diagram", "图表", "流程图", "mermaid", "时序图"]
+  "tags": [
+    "diagram",
+    "图表",
+    "流程图",
+    "mermaid",
+    "时序图"
+  ],
+  "roles": [
+    "programmer",
+    "product-manager",
+    "researcher"
+  ]
 }

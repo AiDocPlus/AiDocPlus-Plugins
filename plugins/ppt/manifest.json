@@ -10,5 +10,16 @@
   "majorCategory": "content-generation",
   "subCategory": "visualization",
   "category": "visualization",
-  "tags": ["ppt", "演示文稿", "presentation", "slides"]
+  "tags": [
+    "ppt",
+    "演示文稿",
+    "presentation",
+    "slides"
+  ],
+  "roles": [
+    "teacher",
+    "product-manager",
+    "marketing",
+    "content-creator"
+  ]
 }

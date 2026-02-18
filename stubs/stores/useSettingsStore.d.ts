@@ -17,9 +17,15 @@ export declare const useSettingsStore: {
 };
 
 export declare function getAIInvokeParams(): {
-  provider: string;
-  apiKey: string;
-  model: string;
-  baseUrl?: string;
-  [key: string]: unknown;
+  provider: string | undefined;
+  apiKey: string | undefined;
+  model: string | undefined;
+  baseUrl?: string | undefined;
+};
+
+export declare function getAIInvokeParamsForService(serviceId?: string): {
+  provider: string | undefined;
+  apiKey: string | undefined;
+  model: string | undefined;
+  baseUrl?: string | undefined;
 };
