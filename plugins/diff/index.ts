@@ -1,14 +1,14 @@
+import React from 'react';
 import { GitCompareArrows } from 'lucide-react';
 import type { DocumentPlugin } from '../types';
 import { registerPluginI18n } from '../i18n-loader';
 import { registerPlugin } from '../pluginStore';
-import { DiffPluginPanel } from './DiffPluginPanel';
+const DiffPluginPanel = React.lazy(() => import('./DiffPluginPanel').then(m => ({ default: m.DiffPluginPanel })));
 import manifest from './manifest.json';
 import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
 
-registerPluginI18n('plugin-diff', { zh, en, ja });
+registerPluginI18n('plugin-diff', { zh, en });
 
 export const diffPlugin: DocumentPlugin = {
   id: manifest.id,

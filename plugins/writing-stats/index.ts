@@ -1,14 +1,14 @@
+import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import type { DocumentPlugin } from '../types';
 import { registerPluginI18n } from '../i18n-loader';
 import { registerPlugin } from '../pluginStore';
-import { WritingStatsPluginPanel } from './WritingStatsPluginPanel';
+const WritingStatsPluginPanel = React.lazy(() => import('./WritingStatsPluginPanel').then(m => ({ default: m.WritingStatsPluginPanel })));
 import manifest from './manifest.json';
 import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
 
-registerPluginI18n('plugin-writing-stats', { zh, en, ja });
+registerPluginI18n('plugin-writing-stats', { zh, en });
 
 export const writingStatsPlugin: DocumentPlugin = {
   id: manifest.id,

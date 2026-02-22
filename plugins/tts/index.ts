@@ -1,14 +1,14 @@
+import React from 'react';
 import { Volume2 } from 'lucide-react';
 import type { DocumentPlugin } from '../types';
 import { registerPluginI18n } from '../i18n-loader';
 import { registerPlugin } from '../pluginStore';
-import { TtsPluginPanel } from './TtsPluginPanel';
+const TtsPluginPanel = React.lazy(() => import('./TtsPluginPanel').then(m => ({ default: m.TtsPluginPanel })));
 import manifest from './manifest.json';
 import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
 
-registerPluginI18n('plugin-tts', { zh, en, ja });
+registerPluginI18n('plugin-tts', { zh, en });
 
 export const ttsPlugin: DocumentPlugin = {
   id: manifest.id,

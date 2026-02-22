@@ -1,15 +1,15 @@
+import React from 'react';
 import { FileSearch } from 'lucide-react';
 import type { DocumentPlugin } from '../types';
 import { registerPluginI18n } from '../i18n-loader';
 import { registerPlugin } from '../pluginStore';
-import { OfficeViewerPanel } from './OfficeViewerPanel';
+const OfficeViewerPanel = React.lazy(() => import('./OfficeViewerPanel').then(m => ({ default: m.OfficeViewerPanel })));
 import manifest from './manifest.json';
 import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
 
 // 注册插件 i18n
-registerPluginI18n('plugin-officeviewer', { zh, en, ja });
+registerPluginI18n('plugin-officeviewer', { zh, en });
 
 export const officeViewerPlugin: DocumentPlugin = {
   id: manifest.id,

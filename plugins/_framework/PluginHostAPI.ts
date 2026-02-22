@@ -61,6 +61,9 @@ const ALLOWED_PLUGIN_COMMANDS = new Set([
   // 版本管理（版本时间线插件）
   'list_versions',          // 列出文档版本
   'get_version',            // 获取指定版本详情
+
+  // 微信公众号（通用 HTTP 请求）
+  'wechat_http_request',    // 通用 HTTP 请求（支持 JSON + multipart）
 ]);
 
 /**

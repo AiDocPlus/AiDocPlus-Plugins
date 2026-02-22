@@ -12,9 +12,10 @@ AiDocPlus 外部插件集合。所有 21 个插件在此项目中独立开发、
 
 - **仓库**：`https://github.com/AiDocPlus/AiDocPlus-Plugins.git`
 - **本地路径**：`/Users/jdh/Code/AiDocPlus-Plugins`
-- **主程序仓库**：`https://github.com/AiDocPlus/AiDocPlus.git`（本地路径 `/Users/jdh/Code/AiDocPlus`）
+- **主程序源码仓库**：`/Users/jdh/Code/AiDocPlus-Main`
+- **构建目标仓库**：`/Users/jdh/Code/AiDocPlus`
 - **SDK 来源**：主程序 `apps/desktop/src-ui/src/plugins/` 中的框架文件
-- **部署方式**：将插件源码复制到主程序 `src/plugins/` 下，由主程序 Vite 统一打包
+- **部署方式**：`deploy.sh` 双目标部署——同时复制到 `AiDocPlus/`（构建目标）和 `AiDocPlus-Main/`（开发目录）的 `src/plugins/` 下
 
 ## 项目结构
 
@@ -40,7 +41,7 @@ AiDocPlus-Plugins/
 │       ├── manifest.json       # 插件元数据（UUID、名称、分类）
 │       ├── index.ts            # 插件定义 + 自注册
 │       ├── {Name}PluginPanel.tsx  # 面板组件
-│       └── i18n/{zh,en,ja}.json   # 翻译文件
+│       └── i18n/{zh,en}.json      # 翻译文件
 ├── stubs/                      # 主程序内部模块类型 stub（使 SDK 类型检查通过）
 ├── scripts/
 │   ├── sync-sdk.sh             # 从主程序同步 SDK
@@ -88,7 +89,7 @@ pnpm deploy -- summary  # 部署单个插件
 | `manifest.json` | 插件元数据（UUID、名称、分类、标签等） | ✅ |
 | `index.ts` | 插件定义 + 自注册（`registerPlugin()`） | ✅ |
 | `{Name}PluginPanel.tsx` | 插件面板 UI 组件 | ✅ |
-| `i18n/{zh,en,ja}.json` | 国际化翻译文件 | ✅ |
+| `i18n/{zh,en}.json` | 国际化翻译文件 | ✅ |
 | `{name}Utils.ts` | 辅助函数（可选） | ❌ |
 
 > **零改动核心代码**：`loader.ts` 通过 `import.meta.glob` 自动发现新插件。无需修改 `registry.ts`、`constants.ts`、`plugin.rs` 或 `main.rs`。
@@ -125,6 +126,7 @@ pnpm deploy -- summary  # 部署单个插件
 - `test_smtp_connection`、`send_email`
 - `check_pandoc`、`pandoc_export`
 - `list_versions`、`get_version`
+- `wechat_http_request`
 
 ### 接口不足时
 
@@ -137,16 +139,14 @@ pnpm deploy -- summary  # 部署单个插件
 
 ### 插件 i18n 规范
 
-每个插件必须自带翻译文件（`i18n/{zh,en,ja}.json`），通过 `registerPluginI18n` 注册到 i18next 命名空间。
+每个插件必须自带翻译文件（`i18n/{zh,en}.json`），通过 `registerPluginI18n` 注册到 i18next 命名空间。
 
 ```typescript
 // index.ts 中注册
 import { registerPluginI18n } from '../i18n-loader';
 import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
-
-registerPluginI18n('plugin-xxx', { zh, en, ja });
+registerPluginI18n('plugin-xxx', { zh, en });
 ```
 
 ### 插件中使用翻译
@@ -165,7 +165,7 @@ const t = host.platform.t;
 ### 翻译文件要求
 
 - **禁止硬编码中文**：所有显示给用户的文字必须通过 `t()` 调用
-- **必须同时提供** zh（中文）、en（英文）、ja（日文）三个翻译文件
+- **必须同时提供** zh（中文）和 en（英文）两个翻译文件
 - **翻译 key 应有意义**：如 `title`、`description`、`generate`、`status.success` 等
 
 ### 主程序 i18n 规范（参考）

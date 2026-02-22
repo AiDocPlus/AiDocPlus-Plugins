@@ -6,7 +6,14 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_PROJECT="$(dirname "$SCRIPT_DIR")"
-MAIN_PROJECT="${1:-$(dirname "$PLUGIN_PROJECT")/AiDocPlus}"
+PARENT_DIR="$(dirname "$PLUGIN_PROJECT")"
+
+# 优先从 AiDocPlus-Main（源码仓库）同步，而非 AiDocPlus（构建目标）
+MAIN_PROJECT="${1:-${PARENT_DIR}/AiDocPlus-Main}"
+if [ ! -d "$MAIN_PROJECT/apps/desktop/src-ui/src/plugins" ]; then
+  # 回退到构建目标
+  MAIN_PROJECT="${PARENT_DIR}/AiDocPlus"
+fi
 
 SRC_PLUGINS="$MAIN_PROJECT/apps/desktop/src-ui/src/plugins"
 SDK_DIR="$PLUGIN_PROJECT/sdk"

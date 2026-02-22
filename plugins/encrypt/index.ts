@@ -1,14 +1,14 @@
+import React from 'react';
 import { Shield } from 'lucide-react';
 import type { DocumentPlugin } from '../types';
 import { registerPluginI18n } from '../i18n-loader';
 import { registerPlugin } from '../pluginStore';
-import { EncryptPluginPanel } from './EncryptPluginPanel';
+const EncryptPluginPanel = React.lazy(() => import('./EncryptPluginPanel').then(m => ({ default: m.EncryptPluginPanel })));
 import manifest from './manifest.json';
 import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
 
-registerPluginI18n('plugin-encrypt', { zh, en, ja });
+registerPluginI18n('plugin-encrypt', { zh, en });
 
 export const encryptPlugin: DocumentPlugin = {
   id: manifest.id,
