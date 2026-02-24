@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { PluginPanelProps } from '../types';
-import type { ExtractData, Extraction, ExtractField, ExtractTemplate } from './types';
+import type { ExtractData, Extraction, ExtractTemplate } from './types';
 import { EXTRACT_TEMPLATES } from './types';
 import {
   buildExtractSystemPrompt,
@@ -11,7 +11,7 @@ import {
 import { truncateContent } from '../_framework/pluginUtils';
 import { Button } from '../_framework/ui';
 import { usePluginHost } from '../_framework/PluginHostAPI';
-import { TableProperties, Download, Trash2, Pencil, Plus, Check, X } from 'lucide-react';
+import { TableProperties, Download, Trash2, Plus, Check, X } from 'lucide-react';
 import { PluginPanelLayout } from '../_framework/PluginPanelLayout';
 
 const DEFAULT_PROMPT = '从文档中提取结构化信息。';

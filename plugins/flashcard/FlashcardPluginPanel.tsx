@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import type { PluginPanelProps } from '../types';
 import type { FlashcardData, Flashcard } from './types';
-import { CARD_TYPE_LABELS, generateCardId } from './types';
+import { CARD_TYPE_LABELS } from './types';
 import { buildFlashcardSystemPrompt, buildFlashcardUserPrompt, parseFlashcardsFromAiResponse } from './flashcardAiPrompts';
 import { truncateContent } from '../_framework/pluginUtils';
 import { Button } from '../_framework/ui';
 import { usePluginHost } from '../_framework/PluginHostAPI';
-import { Layers, Download, Shuffle, CheckCircle, Circle, RotateCcw, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
+import { Layers, Download, Shuffle, CheckCircle, Circle, Trash2, Eye, EyeOff } from 'lucide-react';
 import { PluginPanelLayout } from '../_framework/PluginPanelLayout';
 
 const DEFAULT_PROMPT = '从文档中提取关键知识点，生成记忆卡片。';

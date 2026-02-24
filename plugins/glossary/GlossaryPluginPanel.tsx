@@ -6,7 +6,7 @@ import { buildGlossarySystemPrompt, buildGlossaryUserPrompt, parseGlossaryFromAi
 import { truncateContent } from '../_framework/pluginUtils';
 import { Button } from '../_framework/ui';
 import { usePluginHost } from '../_framework/PluginHostAPI';
-import { BookA, Download, Trash2, Pencil, Plus, Check, X, Search, ArrowUpDown } from 'lucide-react';
+import { BookA, Download, Trash2, Pencil, Plus, Check, X, Search } from 'lucide-react';
 import { PluginPanelLayout } from '../_framework/PluginPanelLayout';
 
 const DEFAULT_PROMPT = '从文档中识别并提取专业术语，生成术语表。';
