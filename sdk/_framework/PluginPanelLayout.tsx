@@ -7,12 +7,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
 import type { EditorView } from '@codemirror/view';
-import type { ViewUpdate } from '@codemirror/view';
 import { LanguageDescription } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
-import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
-const CodeMirror = lazy(() => import('@uiw/react-codemirror')) as React.ComponentType<ReactCodeMirrorProps>;
+const CodeMirror = lazy(() => import('@uiw/react-codemirror'));
 const EditorToolbar = lazy(() => import('@/components/editor/EditorToolbar').then(m => ({ default: m.EditorToolbar })));
 
 /** 根据内容启发式检测语言名称 */
@@ -221,7 +219,7 @@ export function PluginPanelLayout({
                 onChange={e => onPromptChange(e.target.value)}
                 placeholder={placeholder}
                 className="w-full h-14 px-3 py-2 text-sm border rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                style={{ fontFamily: '宋体', fontSize: '16px' }}
+                style={{ fontFamily: '"Songti SC", "SimSun", "STSong", serif', fontSize: '16px' }}
                 spellCheck={false}
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -256,7 +254,7 @@ export function PluginPanelLayout({
             <div
               ref={statusScrollRef}
               className="max-h-[150px] overflow-y-auto px-2 py-1.5 text-xs whitespace-pre-wrap border-b"
-              style={{ fontFamily: '宋体', fontSize: '12px' }}
+              style={{ fontFamily: '"Songti SC", "SimSun", "STSong", serif', fontSize: '12px' }}
             >
               {statusLogs.map((log, i) => (
                 <div key={i} className={log.isError ? 'text-destructive' : 'text-green-600 dark:text-green-400'}>
@@ -321,7 +319,7 @@ export function PluginPanelLayout({
                 onChange={e => onPromptChange(e.target.value)}
                 placeholder={placeholder}
                 className="w-full h-14 px-2 py-1.5 text-sm border rounded-md bg-background resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                style={{ fontFamily: '宋体', fontSize: '16px' }}
+                style={{ fontFamily: '"Songti SC", "SimSun", "STSong", serif', fontSize: '16px' }}
                 spellCheck={false}
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -413,7 +411,7 @@ export function PluginPanelLayout({
           <div
             ref={statusScrollRef}
             className="max-h-[150px] overflow-y-auto px-2 py-1.5 text-xs whitespace-pre-wrap border-b"
-            style={{ fontFamily: '宋体', fontSize: '12px' }}
+            style={{ fontFamily: '"Songti SC", "SimSun", "STSong", serif', fontSize: '12px' }}
           >
             {statusLogs.map((log, i) => (
               <div key={i} className={log.isError ? 'text-destructive' : 'text-green-600 dark:text-green-400'}>
@@ -476,8 +474,8 @@ export function PluginPanelLayout({
                 height="55vh"
                 extensions={langExtensions}
                 basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: true }}
-                onCreateEditor={(view: EditorView) => { sourceCmViewRef.current = view; }}
-                onUpdate={(viewUpdate: ViewUpdate) => {
+                onCreateEditor={(view) => { sourceCmViewRef.current = view; }}
+                onUpdate={(viewUpdate) => {
                   if (!viewUpdate.selectionSet && !viewUpdate.docChanged) return;
                   const state = viewUpdate.state;
                   const pos = state.selection.main.head;

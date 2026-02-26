@@ -1,7 +1,6 @@
 /**
  * Shared type definitions for AiDocPlus
  */
-import { BUILT_IN_ROLES as _BUILT_IN_ROLES } from './generated/roles.generated';
 
 // ============================================================
 // Project Types
@@ -52,7 +51,7 @@ export interface Document {
   pluginData?: Record<string, unknown>;  // 插件数据，key = 插件 UUID
   enabledPlugins?: string[];  // 该文档启用的插件 UUID 列表（顺序即标签栏顺序）
   composedContent?: string;  // 合并内容（Markdown），汇集正文+插件片段+外部导入
-  aiServiceId?: string;      // 文档级 AI 服务绑定（可选，空=全局默认）
+  aiServiceId?: string;  // 文档级 AI 服务绑定（为空时使用全局 activeServiceId）
 }
 
 // ============================================================
@@ -74,7 +73,6 @@ export interface PluginManifest {
   subCategory: string;           // 子类：'ai-text' | 'visualization' | 'communication' | ...
   category: string;              // 兼容旧数据（= subCategory 别名）
   tags: string[];                // 搜索标签（中英文关键词）
-  roles?: string[];              // 所属角色 ID 列表（空/缺省 = 适用所有角色）
   // ── 插件市场预留字段 ──
   homepage?: string;             // 插件主页/文档链接
   license?: string;              // 许可证
@@ -85,10 +83,10 @@ export interface PluginManifest {
 }
 
 // ============================================================
-// Template Types
+// Doc Template Types
 // ============================================================
 
-export interface TemplateManifest {
+export interface DocTemplateManifest {
   id: string;
   name: string;
   description: string;
@@ -97,7 +95,6 @@ export interface TemplateManifest {
   type: 'builtin' | 'custom';
   category: string;              // 分类 key
   tags: string[];
-  roles?: string[];              // 所属角色 ID 列表（空/缺省 = 适用所有角色）
   createdAt: number;
   updatedAt: number;
   includeContent: boolean;       // 是否包含素材内容
@@ -105,16 +102,17 @@ export interface TemplateManifest {
   enabledPlugins: string[];      // 预设插件列表
   pluginData?: Record<string, unknown>;
   minAppVersion?: string;
+  isBuiltIn: boolean;            // 是否为内置模板
 }
 
-export interface TemplateContent {
+export interface DocTemplateContent {
   authorNotes: string;
   aiGeneratedContent: string;
   content: string;
   pluginData?: Record<string, unknown>;
 }
 
-export interface TemplateCategory {
+export interface DocTemplateCategory {
   key: string;
   label: string;
   order: number;
@@ -289,6 +287,68 @@ export interface ExportOptions {
   includeVersionHistory?: boolean;
   includeMetadata?: boolean;
   template?: string;
+}
+
+// ============================================================
+// Plugin Types
+// ============================================================
+
+export interface PluginManifest {
+  name: string;
+  displayName: string;
+  version: string;
+  description: string;
+  author: string;
+  engines: {
+    aidocplus: string;
+  };
+  activationEvents?: string[];
+  contributes?: PluginContributes;
+  main: string;
+}
+
+export interface PluginContributes {
+  commands?: PluginCommand[];
+  views?: PluginView[];
+  statusBarItems?: PluginStatusBarItem[];
+}
+
+export interface PluginCommand {
+  id: string;
+  title: string;
+  category?: string;
+  icon?: string;
+  keybinding?: string;
+}
+
+export interface PluginView {
+  id: string;
+  name: string;
+  location: 'left' | 'right' | 'bottom';
+  icon?: string;
+}
+
+export interface PluginStatusBarItem {
+  id: string;
+  text: string;
+  alignment: 'left' | 'right';
+  command?: string;
+}
+
+export interface ExtensionContext {
+  subscriptions: Disposable[];
+  workspaceState: StateStorage;
+  globalState: StateStorage;
+  extensionPath: string;
+}
+
+export interface Disposable {
+  dispose(): void;
+}
+
+export interface StateStorage {
+  get<T>(key: string, defaultValue?: T): Promise<T>;
+  update(key: string, value: unknown): Promise<void>;
 }
 
 // ============================================================
@@ -502,78 +562,12 @@ export function getActiveEmailAccount(email: EmailSettings): EmailAccountConfig 
   return email.accounts.find(a => a.id === email.activeAccountId && a.enabled);
 }
 
-// ============================================================
-// User Role Types
-// ============================================================
-
-export interface UserRole {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  isBuiltIn: boolean;
-  /** 角色专属 System Prompt（拼接在用户自定义 prompt 之前） */
-  systemPrompt: string;
-  /** 可选：覆盖 markdownModePrompt */
-  markdownModePrompt?: string;
-  /** 可选：推荐的 AI temperature */
-  suggestedTemperature?: number;
-  /** 可选：推荐的 AI maxTokens */
-  suggestedMaxTokens?: number;
-}
-
-/** 角色实例：用户基于角色模板创建的可定制配置方案 */
-export interface RoleInstance {
-  id: string;                     // UUID
-  name: string;                   // 实例名称（默认=角色名）
-  roleId: string;                 // 来源角色模板 ID
-  icon: string;
-  description?: string;
-  createdAt: number;              // Unix timestamp (ms)
-  updatedAt: number;
-  // ── 资源子集（用户可定制） ──
-  plugins: string[];              // 插件 UUID 列表
-  promptTemplateIds: string[];    // 提示词模板 ID 列表
-  projectTemplateIds: string[];   // 项目模板 ID 列表
-  docTemplateIds: string[];       // 文档模板 ID 列表
-  aiServiceId?: string;           // 绑定 AI 服务 ID（可选，空=全局默认）
-  // ── AI 行为覆盖（可选，覆盖全局设置） ──
-  systemPrompt?: string;          // 覆盖角色模板的 systemPrompt
-  temperature?: number;
-  maxTokens?: number;
-}
-
-export interface RoleSettings {
-  /** 当前激活角色 ID，'' 表示无角色 */
-  activeRoleId: string;
-  /** 自定义角色列表（内置角色不持久化） */
-  customRoles: UserRole[];
-}
-
-// BUILT_IN_ROLES 已外部化到 AiDocPlus-Roles
-export const BUILT_IN_ROLES: UserRole[];
-
-export const DEFAULT_ROLE_SETTINGS: RoleSettings;
-
-/** 获取当前激活的角色（优先内置，再找自定义） */
-export function getActiveRole(role: RoleSettings): UserRole | undefined;
-
-/** 获取所有角色（内置 + 自定义） */
-export function getAllRoles(role: RoleSettings): UserRole[];
-
-/** 获取当前激活的角色实例（保留兼容） */
-export function getActiveRoleInstance(role: RoleSettings): RoleInstance | undefined;
-
-/** 根据实例获取对应的角色模板（保留兼容） */
-export function getRoleForInstance(instance: RoleInstance): UserRole | undefined;
-
 export interface AppSettings {
   editor: EditorSettings;
   ui: UISettings;
   file: FileSettings;
   ai: AISettings;
   email: EmailSettings;
-  role: RoleSettings;
   shortcuts: Record<string, string>;
 }
 
@@ -649,7 +643,7 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
   services: [],
   activeServiceId: '',
   temperature: 0.7,
-  maxTokens: 2000,
+  maxTokens: 0,
   streamEnabled: true,
   systemPrompt: '',
   maxContentLength: 0,
@@ -669,7 +663,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   file: DEFAULT_FILE_SETTINGS,
   ai: DEFAULT_AI_SETTINGS,
   email: DEFAULT_EMAIL_SETTINGS,
-  role: DEFAULT_ROLE_SETTINGS,
   shortcuts: {
     'search': 'CmdOrCtrl+Shift+F',
     'save': 'CmdOrCtrl+S',
@@ -723,7 +716,7 @@ export interface EventPayloadMap {
 }
 
 export interface EventEmitter {
-  on<K extends EventType>(event: K, callback: (payload: EventPayloadMap[K]) => void): () => void;
+  on<K extends EventType>(event: K, callback: (payload: EventPayloadMap[K]) => void): Disposable;
   emit<K extends EventType>(event: K, payload: EventPayloadMap[K]): void;
   off<K extends EventType>(event: K, callback: (payload: EventPayloadMap[K]) => void): void;
 }
@@ -853,6 +846,7 @@ export interface EditorTab {
 export interface WorkspaceTabState {
   id: string;
   documentId: string;
+  projectId?: string;
   panelState: EditorTab['panelState'];
 }
 

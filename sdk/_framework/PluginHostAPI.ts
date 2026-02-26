@@ -1,32 +1,13 @@
 import { createContext, useContext } from 'react';
 import type { Document } from '@aidocplus/shared-types';
-import { getActiveRole } from '@aidocplus/shared-types';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { save, open } from '@tauri-apps/plugin-dialog';
-import { getAIInvokeParams, useSettingsStore } from '@/stores/useSettingsStore';
+import { getAIInvokeParamsForService, useSettingsStore } from '@/stores/useSettingsStore';
 import { usePluginStorageStore } from '@/stores/usePluginStorageStore';
 import { getFragmentsGroupedByPlugin } from '../fragments';
 import { parseThinkTags } from '@/utils/thinkTagParser';
 import i18next from 'i18next';
-
-/** 为插件 AI 调用注入角色 system prompt */
-function injectRolePrompt(messages: Array<{ role: string; content: string }>): Array<{ role: string; content: string }> {
-  const roleSettings = useSettingsStore.getState().role;
-  const activeRole = getActiveRole(roleSettings);
-  if (!activeRole) return messages;
-  const rolePrompt = (activeRole.systemPrompt || '').trim();
-  if (!rolePrompt) return messages;
-  // 如果第一条已经是 system 消息，将角色 prompt 拼在前面
-  if (messages.length > 0 && messages[0].role === 'system') {
-    return [
-      { role: 'system', content: rolePrompt + '\n\n' + messages[0].content },
-      ...messages.slice(1),
-    ];
-  }
-  // 否则在最前面插入角色 system 消息
-  return [{ role: 'system', content: rolePrompt }, ...messages];
-}
 
 // ============================================================
 // SDK 版本号
@@ -47,6 +28,7 @@ const ALLOWED_PLUGIN_COMMANDS = new Set([
   // 文件操作（导出功能）
   'write_binary_file',      // 写入二进制文件
   'read_file_base64',       // 读取文件为 base64（附件处理）
+  'read_text_file',         // 读取文本文件（CSV 导入等）
   'get_temp_dir',           // 获取临时目录
   'open_file_with_app',     // 用系统应用打开文件（预览）
 
@@ -61,6 +43,29 @@ const ALLOWED_PLUGIN_COMMANDS = new Set([
   // 版本管理（版本时间线插件）
   'list_versions',          // 列出文档版本
   'get_version',            // 获取指定版本详情
+
+  // 微信公众号（通用 HTTP 请求）
+  'wechat_http_request',    // 通用 HTTP 请求（支持 JSON + multipart）
+
+  // TTS 系统语音命令
+  'tts_capabilities',       // 获取 TTS 引擎能力
+  'tts_speak',              // 播放文本
+  'tts_stop',               // 停止播放
+  'tts_is_speaking',        // 查询播放状态
+  'tts_set_rate',           // 设置语速
+  'tts_set_pitch',          // 设置音调
+  'tts_set_volume',         // 设置音量
+  'tts_get_params',         // 获取当前参数
+  'tts_get_param_ranges',   // 获取参数范围
+  'tts_list_voices',        // 列出可用语音
+  'tts_set_voice',          // 设置语音
+
+  // Kokoro TTS 命令（可选高级引擎）
+  'tts_kokoro_available',       // 查询 Kokoro 是否可用
+  'tts_kokoro_download_model',  // 下载 Kokoro 模型
+  'tts_kokoro_synthesize',      // 合成文本为 PCM
+  'tts_kokoro_export_wav',      // 导出 WAV 文件
+  'tts_kokoro_list_voices',     // Kokoro 语音列表
 ]);
 
 /**
@@ -233,6 +238,10 @@ export interface PlatformAPI {
    * @param params 插值参数
    */
   t(key: string, params?: Record<string, string | number>): string;
+  /**
+   * 用系统浏览器打开外部 URL
+   */
+  openUrl(url: string): Promise<void>;
 }
 
 /** 主程序向插件提供的完整 API */
@@ -392,15 +401,15 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
 
   const ai: AIAPI = {
     chat: async (messages, options) => {
-      const aiParams = getAIInvokeParams();
+      const aiParams = getAIInvokeParamsForService(opts.getDocument().aiServiceId);
       // 通知宿主：开始新的 AI 调用，清空思考内容
       lastThinking = '';
       opts.onThinkingUpdate?.('');
 
       const rawResult = await invoke<string>('chat', {
-        messages: injectRolePrompt(messages),
-        ...aiParams,
-        maxTokens: options?.maxTokens ?? 4096,
+          messages,
+          ...aiParams,
+          maxTokens: options?.maxTokens || undefined,
       });
 
       // 自动过滤 <think> 标签
@@ -412,7 +421,7 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
       return parsed.content;
     },
     chatStream: async (messages, onChunk, options) => {
-      const aiParams = getAIInvokeParams();
+      const aiParams = getAIInvokeParamsForService(opts.getDocument().aiServiceId);
       const requestId = `plugin_${pluginId}_${Date.now()}`;
 
       // 通知宿主：开始新的 AI 调用，清空思考内容
@@ -466,9 +475,9 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
 
         // 调用后端流式接口
         await invoke<string>('chat_stream', {
-          messages: injectRolePrompt(messages),
+          messages,
           ...aiParams,
-          maxTokens: options?.maxTokens ?? 4096,
+          maxTokens: options?.maxTokens,
           requestId,
         });
 
@@ -486,7 +495,7 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
       }
     },
     isAvailable: () => {
-      const aiParams = getAIInvokeParams();
+      const aiParams = getAIInvokeParamsForService(opts.getDocument().aiServiceId);
       return !!(aiParams.provider && aiParams.apiKey && aiParams.model);
     },
     truncateContent: (text: string) => {
@@ -572,6 +581,9 @@ export function createPluginHostAPI(opts: CreatePluginHostAPIOptions): PluginHos
       } catch {
         return sectionData as T;
       }
+    },
+    openUrl: async (url: string): Promise<void> => {
+      await invoke('open_file_with_app', { path: url });
     },
     t: (key: string, params?: Record<string, string | number>): string => {
       // 支持带命名空间前缀的 key（如 'plugin-email:title'）
